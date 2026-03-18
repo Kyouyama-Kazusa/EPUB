@@ -8,6 +8,7 @@ const tagDb = require('./database-tags');
 const settingsDb = require('./database-settings');
 const { parseEpub, validateEpub } = require('./epub-parser');
 const fileManager = require('./file-manager');
+const { fetchMetadata } = require('./metadata-fetcher');
 
 function registerIpcHandlers() {
   ipcMain.handle('dialog:openFile', async () => {
@@ -79,7 +80,27 @@ function registerIpcHandlers() {
   });
 
   ipcMain.handle('books:export', async (event, bookIds, format) => {
-    return bookDb.exportBooks(bookIds, format);
+    const content = bookDb.exportBooks(bookIds, format);
+    
+    const filters = format === 'json' 
+      ? [{ name: 'JSON Files', extensions: ['json'] }]
+      : [{ name: 'CSV Files', extensions: ['csv'] }];
+    
+    const result = await dialog.showSaveDialog({
+      filters,
+      defaultPath: `books_export.${format}`
+    });
+    
+    if (result.canceled || !result.filePath) {
+      return { success: false, message: '导出已取消' };
+    }
+    
+    try {
+      fs.writeFileSync(result.filePath, content, 'utf-8');
+      return { success: true, filePath: result.filePath };
+    } catch (error) {
+      throw error;
+    }
   });
 
   ipcMain.handle('folders:getAll', async () => {
@@ -244,22 +265,8 @@ function registerIpcHandlers() {
 
   ipcMain.handle('metadata:fetchOnline', async (event, title, author) => {
     try {
-      const response = await fetch(
-        `https://openlibrary.org/search.json?title=${encodeURIComponent(title)}${author ? `&author=${encodeURIComponent(author)}` : ''}&limit=1`
-      );
-      const data = await response.json();
-      
-      if (data.docs && data.docs.length > 0) {
-        const doc = data.docs[0];
-        return {
-          title: doc.title,
-          author: doc.author_name ? doc.author_name[0] : author,
-          publisher: doc.publisher ? doc.publisher[0] : null,
-          description: doc.first_sentence ? doc.first_sentence[0] : null
-        };
-      }
-      
-      return null;
+      const result = await fetchMetadata(title, author);
+      return result;
     } catch (error) {
       console.error('Failed to fetch online metadata:', error);
       return null;

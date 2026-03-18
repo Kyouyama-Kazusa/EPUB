@@ -14,12 +14,14 @@
   "devDependencies": {
     "electron": "^28.1.0",
     "electron-builder": "^24.9.1",
-    "electron-rebuild": "^3.2.9"
+    "electron-rebuild": "^3.2.9",
+    "icon-gen": "^5.0.0",
+    "mocha": "^11.7.5"
   },
   "dependencies": {
     "better-sqlite3": "^9.2.2",
     "jszip": "^3.10.1",
-    "xml2js": "^0.6.2",
-    "vue": "^3.4.15"
+    "vue": "^3.4.15",
+    "xml2js": "^0.6.2"
   }
 }

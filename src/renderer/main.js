@@ -14,7 +14,8 @@ const app = Vue.createApp({
       editingBook: null,
       isEditModalOpen: false,
       isImportModalOpen: false,
-      importMode: 'copy'
+      importMode: 'copy',
+      theme: 'light'
     };
   },
   computed: {
@@ -58,6 +59,12 @@ const app = Vue.createApp({
     }
   },
   async mounted() {
+    const settings = await window.electronAPI.getSettings();
+    if (settings.theme === 'dark') {
+      this.theme = 'dark';
+      document.body.classList.add('dark-theme');
+      document.querySelector('.btn-theme').textContent = '☀️';
+    }
     await this.loadFolders();
     await this.loadTags();
     await this.loadBooks();
@@ -376,6 +383,39 @@ const app = Vue.createApp({
       setTimeout(() => {
         toast.className = 'toast';
       }, 3000);
+    },
+    toggleTheme() {
+      this.theme = this.theme === 'light' ? 'dark' : 'light';
+      if (this.theme === 'dark') {
+        document.body.classList.add('dark-theme');
+        document.querySelector('.btn-theme').textContent = '☀️';
+      } else {
+        document.body.classList.remove('dark-theme');
+        document.querySelector('.btn-theme').textContent = '🌙';
+      }
+      window.electronAPI.setSettings({ theme: this.theme });
+    },
+    showExportMenu() {
+      const format = prompt('请输入导出格式 (json/csv)：', 'json');
+      if (!format || !['json', 'csv'].includes(format.toLowerCase())) {
+        if (format) this.showToast('无效的导出格式', 'error');
+        return;
+      }
+      this.exportBooks(format.toLowerCase());
+    },
+    async exportBooks(format) {
+      try {
+        const bookIds = this.selectedBooks.length > 0 ? this.selectedBooks : null;
+        const result = await window.electronAPI.exportBooks(bookIds, format);
+        if (result.success) {
+          this.showToast(`导出成功: ${result.filePath}`, 'success');
+        } else {
+          this.showToast(result.message || '导出失败', 'error');
+        }
+      } catch (error) {
+        console.error('Export failed:', error);
+        this.showToast('导出失败', 'error');
+      }
     },
     toggleSection(section) {
       const content = document.getElementById(section + '-content');

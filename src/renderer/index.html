@@ -13,6 +13,7 @@
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
         <h1>EPUB Manager</h1>
+        <button class="btn-theme" onclick="vue.toggleTheme()" title="切换主题">🌙</button>
       </div>
       <div class="sidebar-content">
         <div class="nav-section">
@@ -65,6 +66,7 @@
           <button class="btn btn-primary" onclick="vue.importBooks()">导入书籍</button>
           <button class="btn" onclick="vue.batchEdit()" id="btn-batch-edit" disabled>批量编辑</button>
           <button class="btn" onclick="vue.batchDelete()" id="btn-batch-delete" disabled>批量删除</button>
+          <button class="btn" onclick="vue.showExportMenu()">导出</button>
         </div>
         <div class="toolbar-right">
           <input type="text" class="search-input" placeholder="搜索书名、作者、出版社..." id="search-input" oninput="vue.searchBooks()">

@@ -1,0 +1,12 @@
+{
+  "name": "epub-manager-tests",
+  "version": "1.0.0",
+  "description": "Unit tests for EPUB Manager",
+  "scripts": {
+    "test": "node tests/unit.test.js",
+    "test:watch": "node --watch tests/unit.test.js"
+  },
+  "devDependencies": {
+    "mocha": "^10.2.0"
+  }
+}
