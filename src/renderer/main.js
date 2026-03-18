@@ -506,6 +506,136 @@ const app = Vue.createApp({
           </div>
         </div>
       `).join('');
+    },
+    async showTranslationConfig() {
+      if (!this.selectedBook) {
+        this.showToast('请先选择一本书', 'error');
+        return;
+      }
+      
+      const config = await window.electronAPI.translation.getConfig();
+      
+      document.getElementById('translation-provider').value = config.provider || 'openai';
+      document.getElementById('translation-api-key').value = config.apiKey || '';
+      document.getElementById('translation-temperature').value = config.temperature || 0.3;
+      document.getElementById('translation-max-tokens').value = config.maxTokens || 4096;
+      document.getElementById('translation-base-url').value = config.baseUrl || '';
+      
+      await this.updateModelOptions(config.provider || 'openai');
+      document.getElementById('translation-model').value = config.model || 'gpt-4';
+      
+      this.updateBaseUrlVisibility();
+      
+      document.getElementById('translation-config-modal').classList.add('open');
+    },
+    async onProviderChange() {
+      const provider = document.getElementById('translation-provider').value;
+      await this.updateModelOptions(provider);
+      this.updateBaseUrlVisibility();
+    },
+    updateBaseUrlVisibility() {
+      const provider = document.getElementById('translation-provider').value;
+      const baseUrlGroup = document.getElementById('base-url-group');
+      if (provider === 'local') {
+        baseUrlGroup.style.display = 'block';
+      } else {
+        baseUrlGroup.style.display = 'none';
+      }
+    },
+    async updateModelOptions(provider) {
+      const models = await window.electronAPI.translation.getAvailableModels(provider);
+      const select = document.getElementById('translation-model');
+      select.innerHTML = models.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+    },
+    closeTranslationConfig() {
+      document.getElementById('translation-config-modal').classList.remove('open');
+    },
+    async startTranslation() {
+      if (!this.selectedBook) {
+        this.showToast('请先选择一本书', 'error');
+        return;
+      }
+      
+      const config = {
+        provider: document.getElementById('translation-provider').value,
+        model: document.getElementById('translation-model').value,
+        apiKey: document.getElementById('translation-api-key').value,
+        baseUrl: document.getElementById('translation-base-url').value,
+        temperature: parseFloat(document.getElementById('translation-temperature').value),
+        maxTokens: parseInt(document.getElementById('translation-max-tokens').value)
+      };
+      
+      if (!config.apiKey) {
+        this.showToast('请输入 API Key', 'error');
+        return;
+      }
+      
+      try {
+        await window.electronAPI.translation.setConfig(config);
+      } catch (error) {
+        this.showToast('配置保存失败: ' + error.message, 'error');
+        return;
+      }
+      
+      this.closeTranslationConfig();
+      
+      document.getElementById('translation-progress-modal').classList.add('open');
+      document.getElementById('translation-progress-bar').style.width = '0%';
+      document.getElementById('translation-progress-bar').textContent = '0%';
+      document.getElementById('progress-translated').textContent = '0';
+      document.getElementById('progress-total').textContent = '0';
+      document.getElementById('progress-tokens').textContent = '0';
+      document.getElementById('progress-cost').textContent = '$0.00';
+      document.getElementById('progress-status').textContent = '准备中...';
+      
+      window.electronAPI.translation.onProgress((progress) => {
+        this.updateTranslationProgress(progress);
+      });
+      
+      try {
+        const result = await window.electronAPI.translation.start(this.selectedBook.id);
+        
+        if (result.status === 'completed') {
+          this.showToast('翻译完成！文件已保存到: ' + result.outputPath, 'success');
+          document.getElementById('translation-progress-modal').classList.remove('open');
+        } else if (result.status === 'paused') {
+          this.showToast('翻译已暂停', 'info');
+        }
+      } catch (error) {
+        console.error('Translation failed:', error);
+        this.showToast('翻译失败: ' + error.message, 'error');
+        document.getElementById('translation-progress-modal').classList.remove('open');
+      }
+    },
+    updateTranslationProgress(progress) {
+      const bar = document.getElementById('translation-progress-bar');
+      bar.style.width = progress.progress + '%';
+      bar.textContent = Math.round(progress.progress) + '%';
+      
+      if (progress.translated !== undefined) {
+        document.getElementById('progress-translated').textContent = progress.translated;
+      }
+      if (progress.total !== undefined) {
+        document.getElementById('progress-total').textContent = progress.total;
+      }
+      if (progress.tokens !== undefined) {
+        document.getElementById('progress-tokens').textContent = progress.tokens.toLocaleString();
+      }
+      if (progress.estimatedCost !== undefined) {
+        document.getElementById('progress-cost').textContent = '$' + progress.estimatedCost.toFixed(4);
+      }
+      if (progress.message !== undefined) {
+        document.getElementById('progress-status').textContent = progress.message;
+      }
+    },
+    async cancelTranslation() {
+      try {
+        await window.electronAPI.translation.cancel();
+        document.getElementById('translation-progress-modal').classList.remove('open');
+        this.showToast('翻译已取消', 'info');
+      } catch (error) {
+        console.error('Cancel failed:', error);
+      }
     }
   }
 });

@@ -222,6 +222,16 @@ body.dark-theme .btn-theme:hover {
   color: #fff;
 }
 
+.btn-translate {
+  color: var(--success-color);
+  border-color: var(--success-color);
+}
+
+.btn-translate:hover {
+  background: var(--success-color);
+  color: #fff;
+}
+
 .search-input {
   width: 250px;
   padding: 8px 12px;
@@ -647,4 +657,41 @@ body.dark-theme .tag-item:hover {
 body.dark-theme .folder-item.active,
 body.dark-theme .tag-item.active {
   background: #1a3a5c;
+}
+
+.progress-container {
+  width: 100%;
+  height: 24px;
+  background: #e0e0e0;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary-color), var(--success-color));
+  width: 0%;
+  text-align: center;
+  line-height: 24px;
+  color: #fff;
+  font-size: 12px;
+  transition: width 0.3s ease;
+}
+
+.progress-info {
+  text-align: center;
+}
+
+.progress-info p {
+  margin: 8px 0;
+  color: #666;
+}
+
+body.dark-theme .progress-container {
+  background: #333;
+}
+
+body.dark-theme .progress-info p {
+  color: #999;
 }

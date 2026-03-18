@@ -127,6 +127,7 @@
           <button class="btn" onclick="vue.editBook()">编辑</button>
           <button class="btn" onclick="vue.openBookFile()">打开文件</button>
           <button class="btn" onclick="vue.updateBookCover()">更换封面</button>
+          <button class="btn btn-translate" onclick="vue.showTranslationConfig()">翻译</button>
           <button class="btn btn-danger" onclick="vue.deleteBook()">删除</button>
         </div>
       </div>
@@ -195,6 +196,78 @@
       <div class="modal-footer">
         <button class="btn" onclick="vue.closeImportModal()">关闭</button>
         <button class="btn btn-primary" onclick="vue.selectFilesToImport()">选择文件</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal" id="translation-config-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>翻译配置</h2>
+        <button class="btn-close" onclick="vue.closeTranslationConfig()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Provider</label>
+          <select id="translation-provider" onchange="vue.onProviderChange()">
+            <option value="openai">OpenAI</option>
+            <option value="claude">Claude</option>
+            <option value="local">本地模型 (Ollama)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>模型</label>
+          <select id="translation-model">
+            <option value="gpt-4">GPT-4</option>
+            <option value="gpt-4-turbo">GPT-4 Turbo</option>
+            <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>API Key</label>
+          <input type="password" id="translation-api-key" placeholder="输入 API Key">
+        </div>
+        <div class="form-group" id="base-url-group" style="display:none;">
+          <label>Base URL</label>
+          <input type="text" id="translation-base-url" placeholder="http://localhost:11434/v1">
+        </div>
+        <div class="form-group">
+          <label>Temperature</label>
+          <input type="number" id="translation-temperature" value="0.3" min="0" max="2" step="0.1">
+        </div>
+        <div class="form-group">
+          <label>Max Tokens</label>
+          <input type="number" id="translation-max-tokens" value="4096" min="1" max="100000">
+        </div>
+        <div class="form-group">
+          <label>预估费用</label>
+          <span id="translation-estimate">$0.00</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="vue.closeTranslationConfig()">取消</button>
+        <button class="btn btn-primary" onclick="vue.startTranslation()">开始翻译</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal" id="translation-progress-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>翻译进度</h2>
+        <button class="btn-close" onclick="vue.cancelTranslation()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="progress-container">
+          <div class="progress-bar" id="translation-progress-bar">0%</div>
+        </div>
+        <div class="progress-info">
+          <p>已翻译: <span id="progress-translated">0</span> / <span id="progress-total">0</span> 段落</p>
+          <p>已用 Token: <span id="progress-tokens">0</span></p>
+          <p>预估费用: <span id="progress-cost">$0.00</span></p>
+          <p id="progress-status">准备中...</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-danger" onclick="vue.cancelTranslation()">中断翻译</button>
       </div>
     </div>
   </div>
