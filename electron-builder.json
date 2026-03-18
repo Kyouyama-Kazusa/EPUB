@@ -13,18 +13,10 @@
   "win": {
     "target": [
       {
-        "target": "nsis",
+        "target": "zip",
         "arch": ["x64"]
       }
-    ],
-    "icon": "assets/icons/icon.ico"
-  },
-  "nsis": {
-    "oneClick": false,
-    "perMachine": false,
-    "allowToChangeInstallationDirectory": true,
-    "createDesktopShortcut": true,
-    "createStartMenuShortcut": true
+    ]
   },
   "asar": true,
   "asarUnpack": [
