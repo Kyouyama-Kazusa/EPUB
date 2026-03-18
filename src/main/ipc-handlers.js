@@ -10,6 +10,12 @@ const { parseEpub, validateEpub } = require('./epub-parser');
 const fileManager = require('./file-manager');
 const { fetchMetadata } = require('./metadata-fetcher');
 
+const TranslationEngine = require('./translation');
+const { getTranslationConfig, setTranslationConfig, getAvailableModels, validateConfig } = require('./translation/config-manager');
+const ProgressTracker = require('./translation/progress-tracker');
+
+let translationEngine = null;
+
 function registerIpcHandlers() {
   ipcMain.handle('dialog:openFile', async () => {
     const result = await dialog.showOpenDialog({
@@ -271,6 +277,74 @@ function registerIpcHandlers() {
       console.error('Failed to fetch online metadata:', error);
       return null;
     }
+  });
+
+  ipcMain.handle('translation:getConfig', async () => {
+    return getTranslationConfig();
+  });
+
+  ipcMain.handle('translation:setConfig', async (event, config) => {
+    const errors = validateConfig(config);
+    if (errors.length > 0) {
+      throw new Error(errors.join(', '));
+    }
+    setTranslationConfig(config);
+    return true;
+  });
+
+  ipcMain.handle('translation:getAvailableModels', async (event, provider) => {
+    return getAvailableModels(provider || 'openai');
+  });
+
+  ipcMain.handle('translation:start', async (event, bookId) => {
+    try {
+      const book = bookDb.getBookById(bookId);
+      if (!book) {
+        throw new Error('Book not found');
+      }
+
+      translationEngine = new TranslationEngine();
+      
+      translationEngine.setProgressCallback((progress) => {
+        event.sender.send('translation:progress', progress);
+      });
+
+      const result = await translationEngine.startTranslation(bookId, book.file_path);
+      return result;
+    } catch (error) {
+      console.error('Translation failed:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('translation:cancel', async () => {
+    if (translationEngine) {
+      translationEngine.cancel();
+      return true;
+    }
+    return false;
+  });
+
+  ipcMain.handle('translation:getTask', async (event, taskId) => {
+    return ProgressTracker.getTask(taskId);
+  });
+
+  ipcMain.handle('translation:getTaskByBook', async (event, bookId) => {
+    return ProgressTracker.getTaskByBookId(bookId);
+  });
+
+  ipcMain.handle('translation:getProgress', async (event, taskId) => {
+    return ProgressTracker.calculateProgress(taskId);
+  });
+
+  ipcMain.handle('translation:estimateCost', async (event, paragraphCount, model) => {
+    const config = getTranslationConfig();
+    const avgTokensPerParagraph = 500;
+    const totalTokens = paragraphCount * avgTokensPerParagraph;
+    
+    const LLMClient = require('./translation/llm-client');
+    const client = new LLMClient({ ...config, model: model || config.model });
+    return client.estimateCost(totalTokens);
   });
 }
 

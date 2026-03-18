@@ -35,5 +35,18 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getSettings: () => ipcRenderer.invoke('settings:get'),
   setSettings: (settings) => ipcRenderer.invoke('settings:set', settings),
   
-  fetchOnlineMetadata: (title, author) => ipcRenderer.invoke('metadata:fetchOnline', title, author)
+  fetchOnlineMetadata: (title, author) => ipcRenderer.invoke('metadata:fetchOnline', title, author),
+
+  translation: {
+    getConfig: () => ipcRenderer.invoke('translation:getConfig'),
+    setConfig: (config) => ipcRenderer.invoke('translation:setConfig', config),
+    getAvailableModels: (provider) => ipcRenderer.invoke('translation:getAvailableModels', provider),
+    start: (bookId) => ipcRenderer.invoke('translation:start', bookId),
+    cancel: () => ipcRenderer.invoke('translation:cancel'),
+    getTask: (taskId) => ipcRenderer.invoke('translation:getTask', taskId),
+    getTaskByBook: (bookId) => ipcRenderer.invoke('translation:getTaskByBook', bookId),
+    getProgress: (taskId) => ipcRenderer.invoke('translation:getProgress', taskId),
+    estimateCost: (paragraphCount, model) => ipcRenderer.invoke('translation:estimateCost', paragraphCount, model),
+    onProgress: (callback) => ipcRenderer.on('translation:progress', (event, progress) => callback(progress))
+  }
 });

@@ -68,10 +68,37 @@ function createTables() {
       PRIMARY KEY (book_id, tag_id)
     );
 
+    CREATE TABLE IF NOT EXISTS translation_tasks (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      book_id INTEGER REFERENCES books(id),
+      status TEXT CHECK(status IN ('pending', 'translating', 'completed', 'failed', 'paused')) DEFAULT 'pending',
+      provider TEXT,
+      model TEXT,
+      total_paragraphs INTEGER DEFAULT 0,
+      translated_paragraphs INTEGER DEFAULT 0,
+      total_tokens INTEGER DEFAULT 0,
+      progress REAL DEFAULT 0.0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      completed_at DATETIME
+    );
+
+    CREATE TABLE IF NOT EXISTS translation_results (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      task_id INTEGER REFERENCES translation_tasks(id),
+      paragraph_index INTEGER,
+      original_text TEXT,
+      translated_text TEXT,
+      tokens_used INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
     CREATE INDEX IF NOT EXISTS idx_books_title ON books(title);
     CREATE INDEX IF NOT EXISTS idx_books_author ON books(author);
     CREATE INDEX IF NOT EXISTS idx_books_read_status ON books(read_status);
     CREATE INDEX IF NOT EXISTS idx_folders_parent ON folders(parent_id);
+    CREATE INDEX IF NOT EXISTS idx_translation_tasks_book ON translation_tasks(book_id);
+    CREATE INDEX IF NOT EXISTS idx_translation_results_task ON translation_results(task_id);
   `);
 }
 
