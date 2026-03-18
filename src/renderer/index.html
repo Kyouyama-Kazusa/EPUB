@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: file:; connect-src 'self' https:;">
+  <title>EPUB Manager</title>
+  <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <div id="app">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <h1>EPUB Manager</h1>
+      </div>
+      <div class="sidebar-content">
+        <div class="nav-section">
+          <div class="nav-section-header" onclick="toggleSection('folders')">
+            <span>文件夹</span>
+            <span class="toggle-icon" id="folders-toggle">▼</span>
+          </div>
+          <div class="nav-section-content" id="folders-content">
+            <div class="folder-tree" id="folder-tree"></div>
+            <button class="btn-add" onclick="vue.addFolder()">+ 新建文件夹</button>
+          </div>
+        </div>
+        <div class="nav-section">
+          <div class="nav-section-header" onclick="toggleSection('tags')">
+            <span>标签</span>
+            <span class="toggle-icon" id="tags-toggle">▼</span>
+          </div>
+          <div class="nav-section-content" id="tags-content">
+            <div class="tag-list" id="tag-list"></div>
+            <button class="btn-add" onclick="vue.addTag()">+ 新建标签</button>
+          </div>
+        </div>
+        <div class="nav-section">
+          <div class="nav-section-header" onclick="toggleSection('status')">
+            <span>阅读状态</span>
+            <span class="toggle-icon" id="status-toggle">▼</span>
+          </div>
+          <div class="nav-section-content" id="status-content">
+            <div class="status-list">
+              <label class="status-item">
+                <input type="checkbox" value="unread" onchange="vue.filterByStatus()"> 未读
+                <span class="count" id="count-unread">0</span>
+              </label>
+              <label class="status-item">
+                <input type="checkbox" value="reading" onchange="vue.filterByStatus()"> 阅读中
+                <span class="count" id="count-reading">0</span>
+              </label>
+              <label class="status-item">
+                <input type="checkbox" value="read" onchange="vue.filterByStatus()"> 已读
+                <span class="count" id="count-read">0</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+    <main class="main-content">
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <button class="btn btn-primary" onclick="vue.importBooks()">导入书籍</button>
+          <button class="btn" onclick="vue.batchEdit()" id="btn-batch-edit" disabled>批量编辑</button>
+          <button class="btn" onclick="vue.batchDelete()" id="btn-batch-delete" disabled>批量删除</button>
+        </div>
+        <div class="toolbar-right">
+          <input type="text" class="search-input" placeholder="搜索书名、作者、出版社..." id="search-input" oninput="vue.searchBooks()">
+          <select class="view-select" id="view-select" onchange="vue.toggleView()">
+            <option value="grid">网格视图</option>
+            <option value="list">列表视图</option>
+          </select>
+        </div>
+      </div>
+      <div class="book-list-container" id="book-list-container">
+        <div class="book-list" id="book-list"></div>
+        <div class="empty-state" id="empty-state">
+          <p>暂无书籍</p>
+          <button class="btn btn-primary" onclick="vue.importBooks()">导入第一本书</button>
+        </div>
+      </div>
+    </main>
+    <aside class="detail-panel" id="detail-panel">
+      <div class="detail-header">
+        <h2>书籍详情</h2>
+        <button class="btn-close" onclick="vue.closeDetail()">×</button>
+      </div>
+      <div class="detail-content" id="detail-content">
+        <div class="detail-cover">
+          <img id="detail-cover-img" src="" alt="封面">
+        </div>
+        <div class="detail-info">
+          <div class="detail-field">
+            <label>书名</label>
+            <span id="detail-title"></span>
+          </div>
+          <div class="detail-field">
+            <label>作者</label>
+            <span id="detail-author"></span>
+          </div>
+          <div class="detail-field">
+            <label>出版社</label>
+            <span id="detail-publisher"></span>
+          </div>
+          <div class="detail-field">
+            <label>标签</label>
+            <div class="detail-tags" id="detail-tags"></div>
+          </div>
+          <div class="detail-field">
+            <label>阅读状态</label>
+            <select id="detail-status" onchange="vue.updateBookStatus()">
+              <option value="unread">未读</option>
+              <option value="reading">阅读中</option>
+              <option value="read">已读</option>
+            </select>
+          </div>
+          <div class="detail-field">
+            <label>描述</label>
+            <p id="detail-description"></p>
+          </div>
+        </div>
+        <div class="detail-actions">
+          <button class="btn" onclick="vue.editBook()">编辑</button>
+          <button class="btn" onclick="vue.openBookFile()">打开文件</button>
+          <button class="btn" onclick="vue.updateBookCover()">更换封面</button>
+          <button class="btn btn-danger" onclick="vue.deleteBook()">删除</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+  <div class="modal" id="edit-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="edit-modal-title">编辑书籍</h2>
+        <button class="btn-close" onclick="closeEditModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>书名</label>
+          <input type="text" id="edit-title">
+        </div>
+        <div class="form-group">
+          <label>作者</label>
+          <input type="text" id="edit-author">
+        </div>
+        <div class="form-group">
+          <label>出版社</label>
+          <input type="text" id="edit-publisher">
+        </div>
+        <div class="form-group">
+          <label>描述</label>
+          <textarea id="edit-description" rows="4"></textarea>
+        </div>
+        <div class="form-group">
+          <label>标签</label>
+          <div class="tag-select" id="edit-tags"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="vue.closeEditModal()">取消</button>
+        <button class="btn btn-primary" onclick="vue.saveBook()">保存</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal" id="import-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>导入书籍</h2>
+        <button class="btn-close" onclick="vue.closeImportModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <p>选择导入模式：</p>
+        <div class="import-options">
+          <label class="import-option">
+            <input type="radio" name="import-mode" value="copy" checked>
+            <span>复制文件</span>
+            <small>将文件复制到软件数据目录</small>
+          </label>
+          <label class="import-option">
+            <input type="radio" name="import-mode" value="reference">
+            <span>仅引用</span>
+            <small>只记录文件路径，不复制文件</small>
+          </label>
+        </div>
+        <div class="import-result" id="import-result" style="display:none;">
+          <h3>导入结果</h3>
+          <p id="import-count"></p>
+          <div id="import-list"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="vue.closeImportModal()">关闭</button>
+        <button class="btn btn-primary" onclick="vue.selectFilesToImport()">选择文件</button>
+      </div>
+    </div>
+  </div>
+  <div class="toast" id="toast"></div>
+  <script src="main.js"></script>
+</body>
+</html>
