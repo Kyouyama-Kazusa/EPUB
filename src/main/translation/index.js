@@ -160,7 +160,7 @@ class TranslationEngine {
         filePath: bookFilePath,
         metadata: epubData.metadata,
         chapters: epubData.chapters,
-        opfPath: epubData.opfPath || epubData.opfPath,
+        opfPath: epubData.opfPath,
         styles: epubData.styles,
         images: epubData.images
       };

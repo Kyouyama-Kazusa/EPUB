@@ -131,7 +131,8 @@ ${targetLang} translation:`;
 
   makeRequest(options) {
     return new Promise((resolve, reject) => {
-      const protocol = options.port === 443 || options.hostname.includes('api.openai.com') || options.hostname.includes('api.anthropic.com') ? https : http;
+      const url = new URL(options.path, options.hostname);
+      const protocol = url.protocol === 'https:' ? https : http;
       
       const req = protocol.request({
         hostname: options.hostname,

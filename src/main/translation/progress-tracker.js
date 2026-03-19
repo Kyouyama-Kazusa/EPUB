@@ -24,13 +24,11 @@ function updateTaskProgress(taskId, translatedParagraphs, totalTokens) {
 function updateTaskStatus(taskId, status) {
   const db = getDb();
   
-  const completedAt = status === 'completed' ? 'CURRENT_TIMESTAMP' : null;
-  
   db.prepare(`
     UPDATE translation_tasks 
-    SET status = ?, completed_at = ${completedAt ? completedAt : 'NULL'}, updated_at = CURRENT_TIMESTAMP
+    SET status = ?, completed_at = ?, updated_at = CURRENT_TIMESTAMP
     WHERE id = ?
-  `).run(status, taskId);
+  `).run(status, status === 'completed' ? 'CURRENT_TIMESTAMP' : null, taskId);
 }
 
 function updateTaskTotals(taskId, totalParagraphs) {

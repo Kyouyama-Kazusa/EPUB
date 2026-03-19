@@ -92,13 +92,13 @@ class BilingualEpubGenerator {
     }
   }
 
-  modifyChaptersForBilingual() {
+  async modifyChaptersForBilingual() {
     const chapters = this.originalEpub.chapters;
     const results = this.translatedResults;
     
     for (const chapter of chapters) {
       const chapterPath = chapter.path;
-      const chapterContent = this.zip.file(chapterPath)?.async('string');
+      const chapterContent = await this.zip.file(chapterPath)?.async('string');
       
       if (chapterContent) {
         const modifiedContent = this.createBilingualChapter(chapter, results);

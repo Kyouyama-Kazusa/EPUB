@@ -28,7 +28,8 @@ class EpubParser {
       chapters: await this.extractChapters(),
       images: this.images,
       styles: this.styles,
-      coverImage: this.findCoverImage()
+      coverImage: this.findCoverImage(),
+      opfPath: this.opfPath
     };
   }
 
