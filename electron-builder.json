@@ -13,10 +13,16 @@
   "win": {
     "target": [
       {
-        "target": "zip",
+        "target": "nsis",
         "arch": ["x64"]
       }
     ]
+  },
+  "nsis": {
+    "oneClick": false,
+    "perMachine": false,
+    "allowToChangeInstallationDirectory": true,
+    "artifactName": "EPUB-Manager-${version}-setup.exe"
   },
   "asar": true,
   "asarUnpack": [
